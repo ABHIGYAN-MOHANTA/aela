@@ -1,8 +1,10 @@
-# 🦇 Aela: The Mini Claude Code
+# 🦇 Aela — Your Terminal AI Sidekick
+
+![Aela the Axolotl](image.png)
 
 > An agentic, terminal-based AI assistant powered by OpenRouter.
 
-Aela is a lightweight but powerful CLI tool inspired by Claude Code. It brings autonomous AI capabilities directly into your terminal, allowing you to converse with LLMs that can read your local files, write code, and execute bash commands on your behalf. 
+Aela is a lightweight but powerful agentic CLI tool. It brings autonomous AI capabilities directly into your terminal, allowing you to converse with LLMs that can read your local files, write code, and execute bash commands on your behalf.
 
 Whether you need to analyze a Git repository, refactor an entire directory, or scaffold a new project, Aela acts as your personal terminal sidekick.
 
@@ -34,19 +36,19 @@ Simply type `aela` followed by your prompt for one-shot execution, or type `aela
 aela repl
 
 # Read files and summarize
-aela "read package.json and summarize what this project does"
+aela read package.json and summarize what this project does
 
 # Search and analyze codebase
-aela "find all TODO comments in my codebase"
+aela find all TODO comments in my codebase
 
 # Write code and scaffold
-aela "create a new python script that scrapes a website"
+aela create a new python script that scrapes a website
 
 # Search the Web
-aela "Search the web for the latest news about OpenAI"
+aela Search the web for the latest news about OpenAI
 
 # Fetch and Read Webpages
-aela "Go to https://news.ycombinator.com and list the top 3 stories right now"
+aela Go to https://news.ycombinator.com and list the top 3 stories right now
 ```
 
 To see the interactive welcome screen and all available commands, simply run:
