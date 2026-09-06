@@ -198,11 +198,46 @@ async function main() {
     baseURL: baseURL,
   });
 
-  const systemPrompt = `You are Aela, a helpful terminal-based AI assistant.
-The current date and time is: ${new Date().toLocaleString()}.
-You are running on: ${os.type()} ${os.release()} (${os.arch()}).
+  // --- Auto-detect environment & project context ---
+  const cwd = process.cwd();
+  const shell = process.env.SHELL || "unknown";
+  const username = os.userInfo().username;
+  const homeDir = os.homedir();
+  const nodeVersion = process.version;
+
+  const hasGit = fs.existsSync(path.join(cwd, ".git"));
+  const hasPackageJson = fs.existsSync(path.join(cwd, "package.json"));
+  const packageManager = fs.existsSync(path.join(cwd, "bun.lockb")) ? "bun"
+    : fs.existsSync(path.join(cwd, "yarn.lock")) ? "yarn"
+    : fs.existsSync(path.join(cwd, "pnpm-lock.yaml")) ? "pnpm"
+    : fs.existsSync(path.join(cwd, "package-lock.json")) ? "npm"
+    : null;
+
+  let gitBranch = "";
+  if (hasGit) {
+    try {
+      const { stdout } = await exec("git rev-parse --abbrev-ref HEAD");
+      gitBranch = stdout.trim();
+    } catch {}
+  }
+
+  const systemPrompt = `You are Aela, an agentic terminal AI assistant.
+
+Current working directory: ${cwd}
+User: ${username}
+Home directory: ${homeDir}
+Shell: ${shell}
+Operating system: ${os.type()} ${os.release()} (${os.arch()})
+Node version: ${nodeVersion}
+Current date: ${new Date().toLocaleString()}
+${hasGit ? `Git branch: ${gitBranch}` : "Not a git repository"}
+${hasPackageJson && packageManager ? `Package manager: ${packageManager}` : ""}
+
+When the user asks about "this codebase", "this project", or "here", they mean the current working directory above. Use the Read and Bash tools to explore it.
 Use your tools to help the user. If they ask about current time or dates, you can use the time provided above.
-IMPORTANT: If you need to ask the user a clarifying question or request permission, you MUST use the "AskUser" tool. Do not just output the question as text, because the program will exit immediately and you will not get an answer.`;
+IMPORTANT: If you need to ask the user a clarifying question or request permission, you MUST use the "AskUser" tool. Do not just output the question as text, because the program will exit immediately and you will not get an answer.
+SAFETY: Before any destructive operation (deleting files, force-pushing, overwriting existing files), you MUST use AskUser to confirm with the user first.
+When reading large files or command outputs, summarize or truncate to keep responses concise.`;
 
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     { role: "system", content: systemPrompt },
