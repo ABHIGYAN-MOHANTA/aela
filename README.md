@@ -1,4 +1,4 @@
-# 🦇 Aela — Your Terminal AI Sidekick
+# 🦇 Aela - Your Terminal AI Sidekick
 
 ![Aela the Axolotl](image.png)
 
@@ -19,19 +19,26 @@ Whether you need to analyze a Git repository, refactor an entire directory, or s
 
 ## 🚀 Installation
 
-You can install Aela globally on your system using npm:
+Install Aela globally using npm:
 
 ```bash
-npm install -g .
+npm install -g aela-ai
 ```
 
-*Note: You may need to run `npm run build` if the `dist/` directory is not already compiled.*
+Or run directly without installing:
+
+```bash
+npx aela-ai <your prompt>
+```
 
 ## 💻 Usage
 
 Simply type `aela` followed by your prompt for one-shot execution, or type `aela repl` to drop into a continuous chat session with persistent memory. No flags necessary.
 
 ```bash
+# One-shot command
+aela your prompt here
+
 # Start an interactive REPL session
 aela repl
 

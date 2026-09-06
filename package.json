@@ -1,10 +1,29 @@
 {
-  "name": "aela",
+  "name": "aela-ai",
   "version": "1.0.0",
   "description": "An agentic, terminal-based AI assistant with file access, web search, and persistent REPL mode.",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ABHIGYAN-MOHANTA/aela.git"
+  },
+  "keywords": [
+    "cli",
+    "ai",
+    "agent",
+    "terminal",
+    "openrouter",
+    "llm",
+    "tavily"
+  ],
+  "files": [
+    "dist",
+    "image.png",
+    "README.md"
+  ],
   "bin": {
-    "aela": "./dist/main.js"
+    "aela": "dist/main.js"
   },
   "scripts": {
     "dev": "bun run app/main.ts",
