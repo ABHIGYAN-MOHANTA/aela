@@ -1,6 +1,6 @@
 {
   "name": "aela-ai",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "An agentic, terminal-based AI assistant with file access, web search, and persistent REPL mode.",
   "type": "module",
   "license": "MIT",
