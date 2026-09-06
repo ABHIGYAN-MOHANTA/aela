@@ -43,6 +43,33 @@ function getConfigPath() {
   return path.join(configDir, "config.json");
 }
 
+
+function getHistoryPath() {
+  const configDir = path.join(os.homedir(), ".bruce");
+  if (!fs.existsSync(configDir)) {
+    fs.mkdirSync(configDir, { recursive: true });
+  }
+  return path.join(configDir, "history.json");
+}
+
+function loadHistory(): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
+  const historyFile = getHistoryPath();
+  if (fs.existsSync(historyFile)) {
+    try {
+      return JSON.parse(fs.readFileSync(historyFile, "utf-8"));
+    } catch (e) {
+      return [];
+    }
+  }
+  return [];
+}
+
+function saveHistory(messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[]) {
+  const historyFile = getHistoryPath();
+  const history = messages.filter(m => m.role !== "system").slice(-20);
+  fs.writeFileSync(historyFile, JSON.stringify(history, null, 2));
+}
+
 function loadConfig(): Config {
   const configFile = getConfigPath();
   if (fs.existsSync(configFile)) {
@@ -136,6 +163,7 @@ async function main() {
     console.log("Welcome to Bruce!");
     console.log("\nAvailable Commands:");
     console.log("  bruce <your prompt>              - Chat with Bruce");
+    console.log("  bruce repl                       - Start an interactive REPL session with history");
     console.log("  bruce config model               - Select from a dropdown of available OpenRouter models");
     console.log("  bruce config maxTokens <number>  - Set max completion tokens (e.g. 4000)");
     console.log("  bruce config apiKey <key>        - Set your OpenRouter API key");
@@ -278,6 +306,14 @@ IMPORTANT: If you need to ask the user a clarifying question or request permissi
     }
   }];
 
+async function runAgent(
+  client: OpenAI,
+  modelName: string,
+  messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+  maxTokens: number,
+  tools: OpenAI.Chat.Completions.ChatCompletionTool[],
+  config: Config
+) {
   while (true) {
     let response;
     try {
@@ -437,6 +473,34 @@ IMPORTANT: If you need to ask the user a clarifying question or request permissi
         }
       }
     }
+  }
+}
+
+  if (prompt === "repl") {
+    console.log(BAT_LOGO);
+    console.log("Welcome to Bruce REPL! Type 'exit' to quit.\n");
+    let messages = loadHistory();
+    if (messages.length === 0 || messages[0].role !== "system") {
+      messages.unshift({ role: "system", content: systemPrompt });
+    } else {
+      messages[0].content = systemPrompt;
+    }
+
+    while (true) {
+      const userInput = await promptInput("You: ");
+      if (userInput.trim().toLowerCase() === "exit" || userInput.trim() === "") {
+        break;
+      }
+      messages.push({ role: "user", content: userInput });
+      await runAgent(client, modelName, messages, maxTokens, tools, config);
+      saveHistory(messages);
+    }
+  } else {
+    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: prompt }
+    ];
+    await runAgent(client, modelName, messages, maxTokens, tools, config);
   }
 }
 
