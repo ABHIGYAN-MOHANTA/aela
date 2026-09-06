@@ -6,13 +6,14 @@ import { promisify } from "util";
 import * as os from "os";
 import * as path from "path";
 import * as readline from "readline";
+import pc from "picocolors";
 
 const exec = promisify(execCallback);
 
 const BAT_LOGO = `
    /\\                 /\\
   / \\'._   (\\_/)   _.'/ \\
- /_.''._'--('.')--'_.''._\\
+ /_Bruce'--('.')-the Bat_\\
  | \\_ /  ;=/ " \\=;  \\ _/ |
   \\/__\\__| \\___/ |__/__\\/
 `;
@@ -90,11 +91,11 @@ function saveConfig(config: Config) {
 async function getValidConfig(): Promise<Config> {
   let config = loadConfig();
   if (!config.apiKey) {
-    console.log(BAT_LOGO);
-    const key = await promptInput("Please enter your OpenRouter API key: ");
+    console.log(pc.cyan(BAT_LOGO));
+    const key = await promptInput(pc.green("Please enter your OpenRouter API key: "));
     config.apiKey = key.trim();
     saveConfig(config);
-    console.log("API Key saved to ~/.bruce/config.json\n");
+    console.log(pc.green("API Key saved to ~/.bruce/config.json\n"));
   }
   return config;
 }
@@ -113,7 +114,7 @@ async function main() {
     }
 
     if (key === "model" && !value) {
-      console.log("Fetching available models from OpenRouter...");
+      console.log(pc.dim("Fetching available models from OpenRouter..."));
       const configObj = await getValidConfig();
       const apiKey = configObj.apiKey;
 
@@ -126,22 +127,22 @@ async function main() {
         const data = await response.json();
         const models = data.data.map((m: any) => m.id);
 
-        console.log("Select a model:");
-        models.forEach((m: string, i: number) => console.log(`${i + 1}. ${m}`));
-        const choice = await promptInput("Enter the number of the model: ");
+        console.log(pc.yellow(pc.bold("\nSelect a model:")));
+        models.forEach((m: string, i: number) => console.log(`${pc.cyan(`${i + 1}.`)} ${m}`));
+        const choice = await promptInput(pc.green("Enter the number of the model: "));
         const index = parseInt(choice, 10) - 1;
         if (index >= 0 && index < models.length) {
           value = models[index];
         } else {
-          console.log("Invalid choice.");
+          console.log(pc.red("Invalid choice."));
           return;
         }
       } catch (e: any) {
-        console.error("Failed to fetch models from OpenRouter.", e.message);
+        console.error(pc.red("Failed to fetch models from OpenRouter. " + e.message));
         return;
       }
     } else if (!value) {
-      console.log(`Value is required for ${key}`);
+      console.log(pc.red(`Value is required for ${key}`));
       return;
     }
 
@@ -152,16 +153,16 @@ async function main() {
     const config = loadConfig();
     (config as any)[key] = value;
     saveConfig(config);
-    console.log(`Successfully updated ${key} to ${value} in ~/.bruce/config.json`);
+    console.log(pc.green(`Successfully updated ${key} to ${value} in ~/.bruce/config.json`));
     return;
   }
 
   const prompt = process.argv.slice(2).join(" ").trim();
 
   if (process.argv.length <= 2 || prompt === "" || prompt === "help" || prompt === "--help" || prompt === "-h") {
-    console.log(BAT_LOGO);
-    console.log("Welcome to Bruce!");
-    console.log("\nAvailable Commands:");
+    console.log(pc.cyan(BAT_LOGO));
+    console.log(pc.green(pc.bold("Welcome to Bruce!")));
+    console.log(pc.yellow("\nAvailable Commands:"));
     console.log("  bruce <your prompt>              - Chat with Bruce");
     console.log("  bruce repl                       - Start an interactive REPL session with history");
     console.log("  bruce config model               - Select from a dropdown of available OpenRouter models");
@@ -169,7 +170,7 @@ async function main() {
     console.log("  bruce config apiKey <key>        - Set your OpenRouter API key");
     console.log("  bruce config tavilyApiKey <key>  - Set your Tavily API key for web search");
     console.log("  bruce help                       - Show this help message");
-    console.log("\nExample Usage:");
+    console.log(pc.yellow("\nExample Usage:"));
     console.log("  bruce Summarize the top 3 stories on https://news.ycombinator.com");
     console.log("  bruce Search the web for the best restaurants in my favorite city");
     console.log("  bruce Read package.json and tell me if any dependencies are outdated");
@@ -180,7 +181,7 @@ async function main() {
   const config = await getValidConfig();
   const apiKey = config.apiKey;
   const modelName = config.model || "anthropic/claude-haiku-4.5";
-  const maxTokens = config.maxTokens || 7000;
+  const maxTokens = config.maxTokens || 4000;
   const baseURL = process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1";
 
   const client = new OpenAI({
@@ -306,179 +307,179 @@ IMPORTANT: If you need to ask the user a clarifying question or request permissi
     }
   }];
 
-async function runAgent(
-  client: OpenAI,
-  modelName: string,
-  messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
-  maxTokens: number,
-  tools: OpenAI.Chat.Completions.ChatCompletionTool[],
-  config: Config
-) {
-  while (true) {
-    let response;
-    try {
-      response = await client.chat.completions.create({
-        model: modelName,
-        messages: messages,
-        max_completion_tokens: maxTokens,
-        tools: tools
-      });
-    } catch (e: any) {
-      if (e.status === 402) {
-        console.error(`\nError: Not enough credits for this request.`);
-        console.error(`You requested up to ${maxTokens} max_tokens, which exceeds your available balance.`);
-        console.error(`Try lowering your maxTokens limit by running:`);
-        console.error(`  bruce config maxTokens <number>\n`);
-        process.exit(1);
-      }
-      throw e;
-    }
-
-    if (!response.choices || response.choices.length === 0) {
-      throw new Error("no choices in response");
-    }
-
-    const message = response.choices[0].message;
-    messages.push(message);
-
-    if (!message.tool_calls || message.tool_calls.length === 0) {
-      if (message.content) {
-        console.log(message.content);
-      }
-      break;
-    }
-
-    for (const toolCall of message.tool_calls) {
-      if (toolCall.type === "function" && toolCall.function.name === "Read") {
-        const args = JSON.parse(toolCall.function.arguments);
-        let content = "";
-        try {
-          content = fs.readFileSync(args.file_path, "utf-8");
-        } catch (err: any) {
-          content = `Error reading file: ${err.message}`;
-        }
-        messages.push({
-          role: "tool",
-          tool_call_id: toolCall.id,
-          content: content
+  async function runAgent(
+    client: OpenAI,
+    modelName: string,
+    messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+    maxTokens: number,
+    tools: OpenAI.Chat.Completions.ChatCompletionTool[],
+    config: Config
+  ) {
+    while (true) {
+      let response;
+      try {
+        response = await client.chat.completions.create({
+          model: modelName,
+          messages: messages,
+          max_completion_tokens: maxTokens,
+          tools: tools
         });
-      } else if (toolCall.type === "function" && toolCall.function.name === "Write") {
-        const args = JSON.parse(toolCall.function.arguments);
-        try {
-          fs.writeFileSync(args.file_path, args.content);
-          messages.push({
-            role: "tool",
-            tool_call_id: toolCall.id,
-            content: "File written successfully"
-          });
-        } catch (err: any) {
-          messages.push({
-            role: "tool",
-            tool_call_id: toolCall.id,
-            content: `Error writing file: ${err.message}`
-          });
+      } catch (e: any) {
+        if (e.status === 402) {
+          console.error(`\nError: Not enough credits for this request.`);
+          console.error(`You requested up to ${maxTokens} max_tokens, which exceeds your available balance.`);
+          console.error(`Try lowering your maxTokens limit by running:`);
+          console.error(`  bruce config maxTokens <number>\n`);
+          process.exit(1);
         }
-      } else if (toolCall.type === "function" && toolCall.function.name === "Bash") {
-        const args = JSON.parse(toolCall.function.arguments);
-        try {
-          const { stdout, stderr } = await exec(args.command);
-          messages.push({
-            role: "tool",
-            tool_call_id: toolCall.id,
-            content: stdout || stderr || "Command executed successfully"
-          });
-        } catch (err: any) {
-          messages.push({
-            role: "tool",
-            tool_call_id: toolCall.id,
-            content: `Error executing command: ${err.message}`
-          });
-        }
-      } else if (toolCall.type === "function" && toolCall.function.name === "SearchWeb") {
-        const args = JSON.parse(toolCall.function.arguments);
-        if (!config.tavilyApiKey) {
-          messages.push({
-            role: "tool",
-            tool_call_id: toolCall.id,
-            content: "Error: tavilyApiKey is not configured. Please tell the user to run 'bruce config tavilyApiKey <their-tavily-api-key>' to enable web search."
-          });
-        } else {
-          try {
-            const searchResponse = await fetch("https://api.tavily.com/search", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                api_key: config.tavilyApiKey,
-                query: args.query,
-                search_depth: "basic",
-                include_answer: true
-              })
-            });
-            const searchData = await searchResponse.json();
-            
-            let content = "";
-            if (searchData.answer) {
-              content += `Answer: ${searchData.answer}\n\n`;
-            }
-            if (searchData.results && searchData.results.length > 0) {
-              content += "Sources:\n" + searchData.results.map((r: any) => `- ${r.title} (${r.url}): ${r.content}`).join("\n");
-            } else {
-              content += "No search results found.";
-            }
+        throw e;
+      }
 
+      if (!response.choices || response.choices.length === 0) {
+        throw new Error("no choices in response");
+      }
+
+      const message = response.choices[0].message;
+      messages.push(message);
+
+      if (!message.tool_calls || message.tool_calls.length === 0) {
+        if (message.content) {
+          console.log(pc.cyan(message.content));
+        }
+        break;
+      }
+
+      for (const toolCall of message.tool_calls) {
+        if (toolCall.type === "function" && toolCall.function.name === "Read") {
+          const args = JSON.parse(toolCall.function.arguments);
+          let content = "";
+          try {
+            content = fs.readFileSync(args.file_path, "utf-8");
+          } catch (err: any) {
+            content = `Error reading file: ${err.message}`;
+          }
+          messages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: content
+          });
+        } else if (toolCall.type === "function" && toolCall.function.name === "Write") {
+          const args = JSON.parse(toolCall.function.arguments);
+          try {
+            fs.writeFileSync(args.file_path, args.content);
             messages.push({
               role: "tool",
               tool_call_id: toolCall.id,
-              content: content || "No relevant info found."
+              content: "File written successfully"
             });
           } catch (err: any) {
             messages.push({
               role: "tool",
               tool_call_id: toolCall.id,
-              content: `Error executing web search: ${err.message}`
+              content: `Error writing file: ${err.message}`
             });
           }
-        }
-      } else if (toolCall.type === "function" && toolCall.function.name === "AskUser") {
-        const args = JSON.parse(toolCall.function.arguments);
-        const answer = await promptInput(`\n[Bruce asks]: ${args.question}\nYour answer: `);
-        messages.push({
-          role: "tool",
-          tool_call_id: toolCall.id,
-          content: answer
-        });
-      } else if (toolCall.type === "function" && toolCall.function.name === "FetchURL") {
-        const args = JSON.parse(toolCall.function.arguments);
-        try {
-          const response = await fetch(args.url);
-          let text = await response.text();
-          text = text.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-                     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-                     .replace(/<[^>]+>/g, ' ')
-                     .replace(/\s+/g, ' ')
-                     .trim();
+        } else if (toolCall.type === "function" && toolCall.function.name === "Bash") {
+          const args = JSON.parse(toolCall.function.arguments);
+          try {
+            const { stdout, stderr } = await exec(args.command);
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: stdout || stderr || "Command executed successfully"
+            });
+          } catch (err: any) {
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: `Error executing command: ${err.message}`
+            });
+          }
+        } else if (toolCall.type === "function" && toolCall.function.name === "SearchWeb") {
+          const args = JSON.parse(toolCall.function.arguments);
+          if (!config.tavilyApiKey) {
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: "Error: tavilyApiKey is not configured. Please tell the user to run 'bruce config tavilyApiKey <their-tavily-api-key>' to enable web search."
+            });
+          } else {
+            try {
+              const searchResponse = await fetch("https://api.tavily.com/search", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                  api_key: config.tavilyApiKey,
+                  query: args.query,
+                  search_depth: "basic",
+                  include_answer: true
+                })
+              });
+              const searchData = await searchResponse.json();
+
+              let content = "";
+              if (searchData.answer) {
+                content += `Answer: ${searchData.answer}\n\n`;
+              }
+              if (searchData.results && searchData.results.length > 0) {
+                content += "Sources:\n" + searchData.results.map((r: any) => `- ${r.title} (${r.url}): ${r.content}`).join("\n");
+              } else {
+                content += "No search results found.";
+              }
+
+              messages.push({
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: content || "No relevant info found."
+              });
+            } catch (err: any) {
+              messages.push({
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: `Error executing web search: ${err.message}`
+              });
+            }
+          }
+        } else if (toolCall.type === "function" && toolCall.function.name === "AskUser") {
+          const args = JSON.parse(toolCall.function.arguments);
+          const answer = await promptInput(`\n${pc.yellow(pc.bold("[Bruce asks]:"))} ${pc.yellow(args.question)}\n${pc.dim("Your answer: ")}`);
           messages.push({
             role: "tool",
             tool_call_id: toolCall.id,
-            content: text.slice(0, 10000)
+            content: answer
           });
-        } catch (err: any) {
-          messages.push({
-            role: "tool",
-            tool_call_id: toolCall.id,
-            content: `Error fetching URL: ${err.message}`
-          });
+        } else if (toolCall.type === "function" && toolCall.function.name === "FetchURL") {
+          const args = JSON.parse(toolCall.function.arguments);
+          try {
+            const response = await fetch(args.url);
+            let text = await response.text();
+            text = text.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+              .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+              .replace(/<[^>]+>/g, ' ')
+              .replace(/\s+/g, ' ')
+              .trim();
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: text.slice(0, 10000)
+            });
+          } catch (err: any) {
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: `Error fetching URL: ${err.message}`
+            });
+          }
         }
       }
     }
   }
-}
 
   if (prompt === "repl") {
-    console.log(BAT_LOGO);
-    console.log("Welcome to Bruce REPL! Type 'exit' to quit.\n");
+    console.log(pc.cyan(BAT_LOGO));
+    console.log(pc.green(pc.bold("Welcome to Bruce REPL!")) + " " + pc.dim("Type 'exit' to quit.\n"));
     let messages = loadHistory();
     if (messages.length === 0 || messages[0].role !== "system") {
       messages.unshift({ role: "system", content: systemPrompt });
@@ -487,7 +488,7 @@ async function runAgent(
     }
 
     while (true) {
-      const userInput = await promptInput("You: ");
+      const userInput = await promptInput(pc.green(pc.bold("You: ")));
       if (userInput.trim().toLowerCase() === "exit" || userInput.trim() === "") {
         break;
       }

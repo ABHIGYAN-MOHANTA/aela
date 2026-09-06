@@ -9,6 +9,8 @@ Whether you need to analyze a Git repository, refactor an entire directory, or s
 ## ✨ Features
 
 - **Agentic Capabilities:** Bruce doesn't just chat. He has direct access to read/write files, execute bash commands, fetch full webpages, search the web (via Tavily), and even pause to ask you for clarification mid-task.
+- **Interactive REPL Mode:** Drop into a continuous, multi-turn chat session with persistent memory (`bruce repl`).
+- **Beautiful Theming:** A polished, color-coded terminal UX built with `picocolors`.
 - **Model Agnostic:** Powered by OpenRouter, you can instantly switch between the best models (e.g., GPT-4, Claude 3.5 Sonnet, Llama 3) directly from the CLI.
 - **Zero-Friction Setup:** Automatically prompts and securely stores your API keys locally (`~/.bruce/config.json`) on first run. No messy environment variables required.
 - **Lightweight & Fast:** Built entirely in TypeScript with a minimal footprint.
@@ -25,9 +27,12 @@ npm install -g .
 
 ## 💻 Usage
 
-Simply type `bruce` followed by your prompt. No flags necessary.
+Simply type `bruce` followed by your prompt for one-shot execution, or type `bruce repl` to drop into a continuous chat session with persistent memory. No flags necessary.
 
 ```bash
+# Start an interactive REPL session
+bruce repl
+
 # Read files and summarize
 bruce "read package.json and summarize what this project does"
 
