@@ -1,0 +1,20 @@
+{
+  "name": "bruce",
+  "description": "A cute, interactive, terminal-based LLM assistant powered by OpenRouter.",
+  "type": "module",
+  "bin": {
+    "bruce": "./dist/main.js"
+  },
+  "scripts": {
+    "dev": "bun run app/main.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "openai": "^6.16.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "latest",
+    "typescript": "latest"
+  }
+}
