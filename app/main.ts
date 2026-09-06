@@ -10,12 +10,21 @@ import pc from "picocolors";
 
 const exec = promisify(execCallback);
 
-const BAT_LOGO = `
-   /\\                 /\\
-  / \\'._   (\\_/)   _.'/ \\
- /_Bruce'--('.')-the Bat_\\
- | \\_ /  ;=/ " \\=;  \\ _/ |
-  \\/__\\__| \\___/ |__/__\\/
+const AELA_LOGO = `
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  Aela the Axolotl⠀⠀⠀⠀⢀⡏⠈⢱⠀⠀⡖⠲⣀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⠋⠹⡇⠀⡸⢠⠞⠳⠆⠈⡆⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⠤⠤⠤⠤⠤⢬⣇⢀⣿⣚⢳⡏⠀⢰⠃⡴⠛⢦⠀⠀⠀⠀⠀⠀
+⠀⡠⣄⢠⠒⣄⠐⢄⠀⠀⣠⠴⠋⠁⠀⠀⠀⠀⠀⠀⠀⠈⠻⣿⣸⡟⢣⣠⣿⣯⣤⡔⠃⠀⠀⠀⠀⠀⠀
+⠘⣇⠈⢻⡀⠸⡄⠈⣆⠞⠁⠀⠀⠀⠀⠀⠀⠀⣶⣶⣄⡀⠀⠙⠿⣿⣿⣻⡿⠋⢹⠟⠉⡗⠂⠀⠀⠀⠀
+⢴⠚⠢⢤⣿⣧⣽⣶⣏⡀⠀⠀⠀⠀⠀⠀⣀⠀⠘⠿⡭⢯⠆⠐⢲⣿⣾⣿⢁⣶⣏⡠⠞⢳⠉⢩⠏⠀⠀
+⠈⡗⠒⣿⡈⣿⡍⣿⣿⣷⠀⣀⣴⣻⣶⠋⠉⠀⠀⠀⠀⠀⠀⠀⠀⢠⡾⠻⠿⣍⠉⣴⠒⠋⢀⠇⠀⠆⠀
+⢠⠽⠦⠈⣳⣌⣷⣿⠷⠟⠀⠀⠀⠀⠀⠀⠀⠀⣠⢶⡶⢤⣀⠀⢀⡼⠙⣶⣤⠟⠓⠋⠀⠀⠸⡀⠀⢦⠀
+⠘⠂⣤⡔⠛⢯⣙⣿⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢧⡃⠀⠈⠙⠛⠓⠒⠛⠦⣀⠀⠀⠀⠀⠀⣇⠀⠘⡀
+⠀⠸⢅⣙⠶⢲⠟⠻⢿⡷⣄⣀⠀⠀⠀⠀⠀⠀⠀⠈⠙⠂⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⣳⠀⢀⡏⠀⢠⠇
+⠀⠀⠀⠈⠀⠸⠤⠚⠛⠁⢾⠋⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣴⢛⣉⠴⠛⠀⢀⡞⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠒⠒⠦⠴⠦⠶⢤⣀⠀⠀⠀⠀⠀⠀⠀⢠⠿⣍⡉⠁⠀⠀⣀⡤⠊⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠙⠲⠦⣄⣀⣀⡤⠴⠒⠚⠋⠉⠉⠉⠁⠀⠀⠀⠀
 `;
 
 async function promptInput(query: string): Promise<string> {
@@ -37,7 +46,7 @@ interface Config {
 }
 
 function getConfigPath() {
-  const configDir = path.join(os.homedir(), ".bruce");
+  const configDir = path.join(os.homedir(), ".aela");
   if (!fs.existsSync(configDir)) {
     fs.mkdirSync(configDir, { recursive: true });
   }
@@ -46,7 +55,7 @@ function getConfigPath() {
 
 
 function getHistoryPath() {
-  const configDir = path.join(os.homedir(), ".bruce");
+  const configDir = path.join(os.homedir(), ".aela");
   if (!fs.existsSync(configDir)) {
     fs.mkdirSync(configDir, { recursive: true });
   }
@@ -91,11 +100,11 @@ function saveConfig(config: Config) {
 async function getValidConfig(): Promise<Config> {
   let config = loadConfig();
   if (!config.apiKey) {
-    console.log(pc.cyan(BAT_LOGO));
+    console.log(pc.cyan(AELA_LOGO));
     const key = await promptInput(pc.green("Please enter your OpenRouter API key: "));
     config.apiKey = key.trim();
     saveConfig(config);
-    console.log(pc.green("API Key saved to ~/.bruce/config.json\n"));
+    console.log(pc.green("API Key saved to ~/.aela/config.json\n"));
   }
   return config;
 }
@@ -108,7 +117,7 @@ async function main() {
     let value: any = process.argv[4];
 
     if (!key) {
-      console.log("Usage: bruce config <key> [value]");
+      console.log("Usage: aela config <key> [value]");
       console.log("Supported keys: apiKey, model, maxTokens, tavilyApiKey");
       return;
     }
@@ -153,28 +162,28 @@ async function main() {
     const config = loadConfig();
     (config as any)[key] = value;
     saveConfig(config);
-    console.log(pc.green(`Successfully updated ${key} to ${value} in ~/.bruce/config.json`));
+    console.log(pc.green(`Successfully updated ${key} to ${value} in ~/.aela/config.json`));
     return;
   }
 
   const prompt = process.argv.slice(2).join(" ").trim();
 
   if (process.argv.length <= 2 || prompt === "" || prompt === "help" || prompt === "--help" || prompt === "-h") {
-    console.log(pc.cyan(BAT_LOGO));
-    console.log(pc.green(pc.bold("Welcome to Bruce!")));
+    console.log(pc.cyan(AELA_LOGO));
+    console.log(pc.green(pc.bold("Welcome to Aela!")));
     console.log(pc.yellow("\nAvailable Commands:"));
-    console.log("  bruce <your prompt>              - Chat with Bruce");
-    console.log("  bruce repl                       - Start an interactive REPL session with history");
-    console.log("  bruce config model               - Select from a dropdown of available OpenRouter models");
-    console.log("  bruce config maxTokens <number>  - Set max completion tokens (e.g. 4000)");
-    console.log("  bruce config apiKey <key>        - Set your OpenRouter API key");
-    console.log("  bruce config tavilyApiKey <key>  - Set your Tavily API key for web search");
-    console.log("  bruce help                       - Show this help message");
+    console.log("  aela <your prompt>              - Chat with Aela");
+    console.log("  aela repl                       - Start an interactive REPL session with history");
+    console.log("  aela config model               - Select from a dropdown of available OpenRouter models");
+    console.log("  aela config maxTokens <number>  - Set max completion tokens (e.g. 4000)");
+    console.log("  aela config apiKey <key>        - Set your OpenRouter API key");
+    console.log("  aela config tavilyApiKey <key>  - Set your Tavily API key for web search");
+    console.log("  aela help                       - Show this help message");
     console.log(pc.yellow("\nExample Usage:"));
-    console.log("  bruce Summarize the top 3 stories on https://news.ycombinator.com");
-    console.log("  bruce Search the web for the best restaurants in my favorite city");
-    console.log("  bruce Read package.json and tell me if any dependencies are outdated");
-    console.log("  bruce config model");
+    console.log("  aela Summarize the top 3 stories on https://news.ycombinator.com");
+    console.log("  aela Search the web for the best restaurants in my favorite city");
+    console.log("  aela Read package.json and tell me if any dependencies are outdated");
+    console.log("  aela config model");
     return;
   }
 
@@ -189,7 +198,7 @@ async function main() {
     baseURL: baseURL,
   });
 
-  const systemPrompt = `You are Bruce, a helpful terminal-based AI assistant.
+  const systemPrompt = `You are Aela, a helpful terminal-based AI assistant.
 The current date and time is: ${new Date().toLocaleString()}.
 You are running on: ${os.type()} ${os.release()} (${os.arch()}).
 Use your tools to help the user. If they ask about current time or dates, you can use the time provided above.
@@ -329,7 +338,7 @@ IMPORTANT: If you need to ask the user a clarifying question or request permissi
           console.error(`\nError: Not enough credits for this request.`);
           console.error(`You requested up to ${maxTokens} max_tokens, which exceeds your available balance.`);
           console.error(`Try lowering your maxTokens limit by running:`);
-          console.error(`  bruce config maxTokens <number>\n`);
+          console.error(`  aela config maxTokens <number>\n`);
           process.exit(1);
         }
         throw e;
@@ -401,7 +410,7 @@ IMPORTANT: If you need to ask the user a clarifying question or request permissi
             messages.push({
               role: "tool",
               tool_call_id: toolCall.id,
-              content: "Error: tavilyApiKey is not configured. Please tell the user to run 'bruce config tavilyApiKey <their-tavily-api-key>' to enable web search."
+              content: "Error: tavilyApiKey is not configured. Please tell the user to run 'aela config tavilyApiKey <their-tavily-api-key>' to enable web search."
             });
           } else {
             try {
@@ -444,7 +453,7 @@ IMPORTANT: If you need to ask the user a clarifying question or request permissi
           }
         } else if (toolCall.type === "function" && toolCall.function.name === "AskUser") {
           const args = JSON.parse(toolCall.function.arguments);
-          const answer = await promptInput(`\n${pc.yellow(pc.bold("[Bruce asks]:"))} ${pc.yellow(args.question)}\n${pc.dim("Your answer: ")}`);
+          const answer = await promptInput(`\n${pc.yellow(pc.bold("[Aela asks]:"))} ${pc.yellow(args.question)}\n${pc.dim("Your answer: ")}`);
           messages.push({
             role: "tool",
             tool_call_id: toolCall.id,
@@ -478,8 +487,8 @@ IMPORTANT: If you need to ask the user a clarifying question or request permissi
   }
 
   if (prompt === "repl") {
-    console.log(pc.cyan(BAT_LOGO));
-    console.log(pc.green(pc.bold("Welcome to Bruce REPL!")) + " " + pc.dim("Type 'exit' to quit.\n"));
+    console.log(pc.cyan(AELA_LOGO));
+    console.log(pc.green(pc.bold("Welcome to Aela REPL!")) + " " + pc.dim("Type 'exit' to quit.\n"));
     let messages = loadHistory();
     if (messages.length === 0 || messages[0].role !== "system") {
       messages.unshift({ role: "system", content: systemPrompt });

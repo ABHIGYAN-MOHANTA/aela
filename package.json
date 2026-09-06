@@ -1,9 +1,10 @@
 {
-  "name": "bruce",
+  "name": "aela",
+  "version": "1.0.0",
   "description": "An agentic, terminal-based AI assistant with file access, web search, and persistent REPL mode.",
   "type": "module",
   "bin": {
-    "bruce": "./dist/main.js"
+    "aela": "./dist/main.js"
   },
   "scripts": {
     "dev": "bun run app/main.ts",
