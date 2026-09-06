@@ -142,9 +142,9 @@ async function main() {
     console.log("  bruce config tavilyApiKey <key>  - Set your Tavily API key for web search");
     console.log("  bruce help                       - Show this help message");
     console.log("\nExample Usage:");
-    console.log("  bruce read package.json and summarize what this project does");
-    console.log("  bruce find all TODO comments in my codebase");
-    console.log("  bruce create a new python script that scrapes a website");
+    console.log("  bruce Summarize the top 3 stories on https://news.ycombinator.com");
+    console.log("  bruce Search the web for the best restaurants in my favorite city");
+    console.log("  bruce Read package.json and tell me if any dependencies are outdated");
     console.log("  bruce config model");
     return;
   }
@@ -163,7 +163,8 @@ async function main() {
   const systemPrompt = `You are Bruce, a helpful terminal-based AI assistant.
 The current date and time is: ${new Date().toLocaleString()}.
 You are running on: ${os.type()} ${os.release()} (${os.arch()}).
-Use your tools to help the user. If they ask about current time or dates, you can use the time provided above.`;
+Use your tools to help the user. If they ask about current time or dates, you can use the time provided above.
+IMPORTANT: If you need to ask the user a clarifying question or request permission, you MUST use the "AskUser" tool. Do not just output the question as text, because the program will exit immediately and you will not get an answer.`;
 
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     { role: "system", content: systemPrompt },
@@ -237,6 +238,40 @@ Use your tools to help the user. If they ask about current time or dates, you ca
           "query": {
             "type": "string",
             "description": "The search query"
+          }
+        }
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "AskUser",
+      "description": "Pause execution and ask the user a question to get clarification or permission.",
+      "parameters": {
+        "type": "object",
+        "required": ["question"],
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "The question to ask the user"
+          }
+        }
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "FetchURL",
+      "description": "Fetch the raw text content of a URL.",
+      "parameters": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL to fetch"
           }
         }
       }
@@ -369,6 +404,36 @@ Use your tools to help the user. If they ask about current time or dates, you ca
               content: `Error executing web search: ${err.message}`
             });
           }
+        }
+      } else if (toolCall.type === "function" && toolCall.function.name === "AskUser") {
+        const args = JSON.parse(toolCall.function.arguments);
+        const answer = await promptInput(`\n[Bruce asks]: ${args.question}\nYour answer: `);
+        messages.push({
+          role: "tool",
+          tool_call_id: toolCall.id,
+          content: answer
+        });
+      } else if (toolCall.type === "function" && toolCall.function.name === "FetchURL") {
+        const args = JSON.parse(toolCall.function.arguments);
+        try {
+          const response = await fetch(args.url);
+          let text = await response.text();
+          text = text.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+                     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+                     .replace(/<[^>]+>/g, ' ')
+                     .replace(/\s+/g, ' ')
+                     .trim();
+          messages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: text.slice(0, 10000)
+          });
+        } catch (err: any) {
+          messages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: `Error fetching URL: ${err.message}`
+          });
         }
       }
     }

@@ -8,7 +8,7 @@ Whether you need to analyze a Git repository, refactor an entire directory, or s
 
 ## ✨ Features
 
-- **Agentic Capabilities:** Bruce doesn't just chat. He has direct access to read/write files, execute bash commands, and search the web (via Tavily) to autonomously accomplish complex tasks.
+- **Agentic Capabilities:** Bruce doesn't just chat. He has direct access to read/write files, execute bash commands, fetch full webpages, search the web (via Tavily), and even pause to ask you for clarification mid-task.
 - **Model Agnostic:** Powered by OpenRouter, you can instantly switch between the best models (e.g., GPT-4, Claude 3.5 Sonnet, Llama 3) directly from the CLI.
 - **Zero-Friction Setup:** Automatically prompts and securely stores your API keys locally (`~/.bruce/config.json`) on first run. No messy environment variables required.
 - **Lightweight & Fast:** Built entirely in TypeScript with a minimal footprint.
@@ -39,6 +39,9 @@ bruce "create a new python script that scrapes a website"
 
 # Search the Web
 bruce "Search the web for the latest news about OpenAI"
+
+# Fetch and Read Webpages
+bruce "Go to https://news.ycombinator.com and list the top 3 stories right now"
 ```
 
 To see the interactive welcome screen and all available commands, simply run:
