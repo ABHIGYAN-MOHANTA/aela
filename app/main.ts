@@ -32,6 +32,7 @@ interface Config {
   apiKey?: string;
   model?: string;
   maxTokens?: number;
+  tavilyApiKey?: string;
 }
 
 function getConfigPath() {
@@ -80,7 +81,7 @@ async function main() {
 
     if (!key) {
       console.log("Usage: bruce config <key> [value]");
-      console.log("Supported keys: apiKey, model, maxTokens");
+      console.log("Supported keys: apiKey, model, maxTokens, tavilyApiKey");
       return;
     }
 
@@ -138,6 +139,7 @@ async function main() {
     console.log("  bruce config model               - Select from a dropdown of available OpenRouter models");
     console.log("  bruce config maxTokens <number>  - Set max completion tokens (e.g. 4000)");
     console.log("  bruce config apiKey <key>        - Set your OpenRouter API key");
+    console.log("  bruce config tavilyApiKey <key>  - Set your Tavily API key for web search");
     console.log("  bruce help                       - Show this help message");
     console.log("\nExample Usage:");
     console.log("  bruce read package.json and summarize what this project does");
@@ -158,7 +160,13 @@ async function main() {
     baseURL: baseURL,
   });
 
+  const systemPrompt = `You are Bruce, a helpful terminal-based AI assistant.
+The current date and time is: ${new Date().toLocaleString()}.
+You are running on: ${os.type()} ${os.release()} (${os.arch()}).
+Use your tools to help the user. If they ask about current time or dates, you can use the time provided above.`;
+
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+    { role: "system", content: systemPrompt },
     { role: "user", content: prompt }
   ];
 
@@ -212,6 +220,23 @@ async function main() {
           "command": {
             "type": "string",
             "description": "The command to execute"
+          }
+        }
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "SearchWeb",
+      "description": "Search the web for information using Tavily API. Useful for current events, facts, and finding documentation.",
+      "parameters": {
+        "type": "object",
+        "required": ["query"],
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The search query"
           }
         }
       }
@@ -297,6 +322,53 @@ async function main() {
             tool_call_id: toolCall.id,
             content: `Error executing command: ${err.message}`
           });
+        }
+      } else if (toolCall.type === "function" && toolCall.function.name === "SearchWeb") {
+        const args = JSON.parse(toolCall.function.arguments);
+        if (!config.tavilyApiKey) {
+          messages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: "Error: tavilyApiKey is not configured. Please tell the user to run 'bruce config tavilyApiKey <their-tavily-api-key>' to enable web search."
+          });
+        } else {
+          try {
+            const searchResponse = await fetch("https://api.tavily.com/search", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                api_key: config.tavilyApiKey,
+                query: args.query,
+                search_depth: "basic",
+                include_answer: true
+              })
+            });
+            const searchData = await searchResponse.json();
+            
+            let content = "";
+            if (searchData.answer) {
+              content += `Answer: ${searchData.answer}\n\n`;
+            }
+            if (searchData.results && searchData.results.length > 0) {
+              content += "Sources:\n" + searchData.results.map((r: any) => `- ${r.title} (${r.url}): ${r.content}`).join("\n");
+            } else {
+              content += "No search results found.";
+            }
+
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: content || "No relevant info found."
+            });
+          } catch (err: any) {
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: `Error executing web search: ${err.message}`
+            });
+          }
         }
       }
     }

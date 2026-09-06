@@ -8,7 +8,7 @@ Whether you need to analyze a Git repository, refactor an entire directory, or s
 
 ## ✨ Features
 
-- **Agentic Capabilities:** Bruce doesn't just chat. He has direct access to read/write files and execute bash commands to autonomously accomplish complex tasks.
+- **Agentic Capabilities:** Bruce doesn't just chat. He has direct access to read/write files, execute bash commands, and search the web (via Tavily) to autonomously accomplish complex tasks.
 - **Model Agnostic:** Powered by OpenRouter, you can instantly switch between the best models (e.g., GPT-4, Claude 3.5 Sonnet, Llama 3) directly from the CLI.
 - **Zero-Friction Setup:** Automatically prompts and securely stores your API keys locally (`~/.bruce/config.json`) on first run. No messy environment variables required.
 - **Lightweight & Fast:** Built entirely in TypeScript with a minimal footprint.
@@ -36,6 +36,9 @@ bruce "find all TODO comments in my codebase"
 
 # Write code and scaffold
 bruce "create a new python script that scrapes a website"
+
+# Search the Web
+bruce "Search the web for the latest news about OpenAI"
 ```
 
 To see the interactive welcome screen and all available commands, simply run:
@@ -51,9 +54,13 @@ Bruce allows you to easily configure your preferences on the fly.
   ```bash
   bruce config model
   ```
-- **Set API Key:**
+- **Set API Key (OpenRouter):**
   ```bash
   bruce config apiKey <your-key>
+  ```
+- **Set Web Search API Key (Tavily):**
+  ```bash
+  bruce config tavilyApiKey <your-key>
   ```
 - **Set Max Tokens:** (Useful to prevent OpenRouter 402 Credit limit errors)
   ```bash
